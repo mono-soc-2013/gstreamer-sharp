@@ -72,6 +72,11 @@
       <member cname="GST_DEBUG_BOLD" name="Bold" value="256"/>
       <member cname="GST_DEBUG_UNDERLINE" name="Underline" value="512"/>
     </enum>
+    <enum name="DebugColorMode" cname="GstDebugColorMode" type="enum" gtype="gst_debug_color_mode_get_type">
+      <member cname="GST_DEBUG_COLOR_MODE_OFF" name="Off" value="0"/>
+      <member cname="GST_DEBUG_COLOR_MODE_ON" name="On" value="1"/>
+      <member cname="GST_DEBUG_COLOR_MODE_UNIX" name="Unix" value="2"/>
+    </enum>
     <enum name="DebugLevel" cname="GstDebugLevel" type="enum" gtype="gst_debug_level_get_type">
       <member cname="GST_LEVEL_NONE" name="None" value="0"/>
       <member cname="GST_LEVEL_ERROR" name="Error" value="1"/>
@@ -230,6 +235,7 @@
       <member cname="GST_QUERY_ACCEPT_CAPS" name="AcceptCaps" value="40963"/>
       <member cname="GST_QUERY_CAPS" name="Caps" value="43523"/>
       <member cname="GST_QUERY_DRAIN" name="Drain" value="46086"/>
+      <member cname="GST_QUERY_CONTEXT" name="Context" value="48643"/>
     </enum>
     <enum name="Rank" cname="GstRank" type="enum" gtype="gst_rank_get_type">
       <member cname="GST_RANK_NONE" name="None" value="0"/>
@@ -387,6 +393,7 @@
       <member cname="GST_BUFFER_COPY_META" name="Meta" value="4"/>
       <member cname="GST_BUFFER_COPY_MEMORY" name="Memory" value="8"/>
       <member cname="GST_BUFFER_COPY_MERGE" name="Merge" value="16"/>
+      <member cname="GST_BUFFER_COPY_DEEP" name="Deep" value="32"/>
     </enum>
     <enum name="BufferFlags" cname="GstBufferFlags" type="flags" gtype="gst_buffer_flags_get_type">
       <member cname="GST_BUFFER_FLAG_LIVE" name="Live" value="16"/>
@@ -463,6 +470,8 @@
       <member cname="GST_MEMORY_FLAG_NO_SHARE" name="NoShare" value="16"/>
       <member cname="GST_MEMORY_FLAG_ZERO_PREFIXED" name="ZeroPrefixed" value="32"/>
       <member cname="GST_MEMORY_FLAG_ZERO_PADDED" name="ZeroPadded" value="64"/>
+      <member cname="GST_MEMORY_FLAG_PHYSICALLY_CONTIGUOUS" name="PhysicallyContiguous" value="128"/>
+      <member cname="GST_MEMORY_FLAG_NOT_MAPPABLE" name="NotMappable" value="256"/>
       <member cname="GST_MEMORY_FLAG_LAST" name="Last" value="1048576"/>
     </enum>
     <enum name="MessageType" cname="GstMessageType" type="flags" gtype="gst_message_type_get_type">
@@ -497,6 +506,8 @@
       <member cname="GST_MESSAGE_TOC" name="Toc" value="67108864"/>
       <member cname="GST_MESSAGE_RESET_TIME" name="ResetTime" value="134217728"/>
       <member cname="GST_MESSAGE_STREAM_START" name="StreamStart" value="268435456"/>
+      <member cname="GST_MESSAGE_NEED_CONTEXT" name="NeedContext" value="536870912"/>
+      <member cname="GST_MESSAGE_HAVE_CONTEXT" name="HaveContext" value="1073741824"/>
     </enum>
     <enum name="MetaFlags" cname="GstMetaFlags" type="flags" gtype="gst_meta_flags_get_type">
       <member cname="GST_META_FLAG_NONE" name="None" value="0"/>
@@ -564,6 +575,7 @@
     <enum name="ParseFlags" cname="GstParseFlags" type="flags" gtype="gst_parse_flags_get_type">
       <member cname="GST_PARSE_FLAG_NONE" name="None" value="0"/>
       <member cname="GST_PARSE_FLAG_FATAL_ERRORS" name="FatalErrors" value="1"/>
+      <member cname="GST_PARSE_FLAG_NO_SINGLE_ELEMENT_BINS" name="NoSingleElementBins" value="2"/>
     </enum>
     <enum name="PipelineFlags" cname="GstPipelineFlags" type="flags" gtype="gst_pipeline_flags_get_type">
       <member cname="GST_PIPELINE_FLAG_FIXED_CLOCK" name="FixedClock" value="524288"/>
@@ -587,6 +599,7 @@
     <enum name="SchedulingFlags" cname="GstSchedulingFlags" type="flags" gtype="gst_scheduling_flags_get_type">
       <member cname="GST_SCHEDULING_FLAG_SEEKABLE" name="Seekable" value="1"/>
       <member cname="GST_SCHEDULING_FLAG_SEQUENTIAL" name="Sequential" value="2"/>
+      <member cname="GST_SCHEDULING_FLAG_BANDWIDTH_LIMITED" name="BandwidthLimited" value="4"/>
     </enum>
     <enum name="SeekFlags" cname="GstSeekFlags" type="flags" gtype="gst_seek_flags_get_type">
       <member cname="GST_SEEK_FLAG_NONE" name="None" value="0"/>
@@ -605,6 +618,555 @@
       <member cname="GST_SEGMENT_FLAG_SEGMENT" name="Segment" value="8"/>
       <member cname="GST_SEGMENT_FLAG_SKIP" name="Skip" value="16"/>
     </enum>
+    <enum name="StreamFlags" cname="GstStreamFlags" type="flags" gtype="gst_stream_flags_get_type">
+      <member cname="GST_STREAM_FLAG_NONE" name="None" value="0"/>
+      <member cname="GST_STREAM_FLAG_SPARSE" name="Sparse" value="1"/>
+      <member cname="GST_STREAM_FLAG_SELECT" name="Select" value="2"/>
+      <member cname="GST_STREAM_FLAG_UNSELECT" name="Unselect" value="4"/>
+    </enum>
+    <callback name="BufferForeachMetaFunc" cname="GstBufferForeachMetaFunc">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="buffer" type="GstBuffer*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="meta" type="GstMeta**">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="BufferListFunc" cname="GstBufferListFunc">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="buffer" type="GstBuffer**">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="idx" type="guint"/>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="BusFunc" cname="GstBusFunc">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="bus" type="GstBus*"/>
+        <parameter name="message" type="GstMessage*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="BusSyncHandler" cname="GstBusSyncHandler">
+      <return-type type="GstBusSyncReply"/>
+      <parameters>
+        <parameter name="bus" type="GstBus*"/>
+        <parameter name="message" type="GstMessage*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="ClockCallback" cname="GstClockCallback">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="clock" type="GstClock*"/>
+        <parameter name="time" type="guint64"/>
+        <parameter name="id" type="gpointer"/>
+        <parameter closure="3" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="ControlBindingConvert" cname="GstControlBindingConvert">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="binding" type="GstControlBinding*"/>
+        <parameter name="src_value" type="gdouble"/>
+        <parameter name="dest_value" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="ControlSourceGetValue" cname="GstControlSourceGetValue">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="self" type="GstControlSource*"/>
+        <parameter name="timestamp" type="guint64"/>
+        <parameter name="value" type="gdouble"/>
+      </parameters>
+    </callback>
+    <callback name="ControlSourceGetValueArray" cname="GstControlSourceGetValueArray">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="self" type="GstControlSource*"/>
+        <parameter name="timestamp" type="guint64"/>
+        <parameter name="interval" type="guint64"/>
+        <parameter name="n_values" type="guint"/>
+        <parameter name="values" type="gdouble"/>
+      </parameters>
+    </callback>
+    <callback name="DebugFuncPtr" cname="GstDebugFuncPtr">
+      <return-type type="void"/>
+    </callback>
+    <callback name="IteratorCopyFunction" cname="GstIteratorCopyFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="it" type="GstIterator*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="copy" type="GstIterator*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="IteratorFoldFunction" cname="GstIteratorFoldFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="item" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="_ret" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="IteratorForeachFunction" cname="GstIteratorForeachFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="item" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="1" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="IteratorFreeFunction" cname="GstIteratorFreeFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="it" type="GstIterator*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="IteratorItemFunction" cname="GstIteratorItemFunction">
+      <return-type type="GstIteratorItem"/>
+      <parameters>
+        <parameter name="it" type="GstIterator*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="item" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="IteratorNextFunction" cname="GstIteratorNextFunction">
+      <return-type type="GstIteratorResult"/>
+      <parameters>
+        <parameter name="it" type="GstIterator*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="_result" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="IteratorResyncFunction" cname="GstIteratorResyncFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="it" type="GstIterator*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="LogFunction" cname="GstLogFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="category" type="GstDebugCategory*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="level" type="GstDebugLevel"/>
+        <parameter name="file" type="const-gchar*"/>
+        <parameter name="function" type="const-gchar*"/>
+        <parameter name="line" type="gint"/>
+        <parameter name="_object" type="GObject*"/>
+        <parameter name="message" type="GstDebugMessage*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="7" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="MemoryCopyFunction" cname="GstMemoryCopyFunction">
+      <return-type type="GstMemory*" owned="true">
+        <warning>missing glib:type-name</warning>
+      </return-type>
+      <parameters>
+        <parameter name="mem" type="GstMemory*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="offset" type="gssize"/>
+        <parameter name="size" type="gssize"/>
+      </parameters>
+    </callback>
+    <callback name="MemoryIsSpanFunction" cname="GstMemoryIsSpanFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="mem1" type="GstMemory*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="mem2" type="GstMemory*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="offset" type="gsize"/>
+      </parameters>
+    </callback>
+    <callback hidden="0" name="MemoryMapFunction" cname="GstMemoryMapFunction">
+      <return-type type="gpointer"/>
+      <parameters>
+        <parameter name="mem" type="GstMemory*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="maxsize" type="gsize"/>
+        <parameter name="flags" type="GstMapFlags"/>
+      </parameters>
+    </callback>
+    <callback name="MemoryShareFunction" cname="GstMemoryShareFunction">
+      <return-type type="GstMemory*" owned="true">
+        <warning>missing glib:type-name</warning>
+      </return-type>
+      <parameters>
+        <parameter name="mem" type="GstMemory*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="offset" type="gssize"/>
+        <parameter name="size" type="gssize"/>
+      </parameters>
+    </callback>
+    <callback name="MemoryUnmapFunction" cname="GstMemoryUnmapFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="mem" type="GstMemory*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="MetaFreeFunction" cname="GstMetaFreeFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="meta" type="GstMeta*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="buffer" type="GstBuffer*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="MetaInitFunction" cname="GstMetaInitFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="meta" type="GstMeta*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="params" type="gpointer"/>
+        <parameter name="buffer" type="GstBuffer*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="MetaTransformFunction" cname="GstMetaTransformFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="transbuf" type="GstBuffer*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="meta" type="GstMeta*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="buffer" type="GstBuffer*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="type" type="guint32"/>
+        <parameter name="data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback hidden="0" name="MiniObjectCopyFunction" cname="GstMiniObjectCopyFunction">
+      <return-type type="GstMiniObject*">
+        <warning>missing glib:type-name</warning>
+      </return-type>
+      <parameters>
+        <parameter name="obj" type="GstMiniObject*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="MiniObjectDisposeFunction" cname="GstMiniObjectDisposeFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="obj" type="GstMiniObject*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="MiniObjectFreeFunction" cname="GstMiniObjectFreeFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="obj" type="GstMiniObject*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="MiniObjectNotify" cname="GstMiniObjectNotify">
+      <return-type type="void"/>
+      <parameters>
+        <parameter closure="0" name="user_data" type="gpointer"/>
+        <parameter name="obj" type="GstMiniObject*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="PadActivateFunction" cname="GstPadActivateFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="parent" type="GstObject*"/>
+      </parameters>
+    </callback>
+    <callback name="PadActivateModeFunction" cname="GstPadActivateModeFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="parent" type="GstObject*"/>
+        <parameter name="mode" type="GstPadMode"/>
+        <parameter name="active" type="gboolean"/>
+      </parameters>
+    </callback>
+    <callback name="PadChainFunction" cname="GstPadChainFunction">
+      <return-type type="GstFlowReturn"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="parent" type="GstObject*"/>
+        <parameter name="buffer" type="GstBuffer*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="PadChainListFunction" cname="GstPadChainListFunction">
+      <return-type type="GstFlowReturn"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="parent" type="GstObject*"/>
+        <parameter name="list" type="GstBufferList*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="PadEventFunction" cname="GstPadEventFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="parent" type="GstObject*"/>
+        <parameter name="event" type="GstEvent*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="PadForwardFunction" cname="GstPadForwardFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter closure="1" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="PadGetRangeFunction" cname="GstPadGetRangeFunction">
+      <return-type type="GstFlowReturn"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="parent" type="GstObject*"/>
+        <parameter name="offset" type="guint64"/>
+        <parameter name="length" type="guint"/>
+        <parameter name="buffer" type="GstBuffer**">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="PadIterIntLinkFunction" cname="GstPadIterIntLinkFunction">
+      <return-type type="GstIterator*" owned="true">
+        <warning>missing glib:type-name</warning>
+      </return-type>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="parent" type="GstObject*"/>
+      </parameters>
+    </callback>
+    <callback name="PadLinkFunction" cname="GstPadLinkFunction">
+      <return-type type="GstPadLinkReturn"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="parent" type="GstObject*"/>
+        <parameter name="peer" type="GstPad*"/>
+      </parameters>
+    </callback>
+    <callback name="PadProbeCallback" cname="GstPadProbeCallback">
+      <return-type type="GstPadProbeReturn"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="info" type="GstPadProbeInfo*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="PadQueryFunction" cname="GstPadQueryFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="parent" type="GstObject*"/>
+        <parameter name="query" type="GstQuery*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="PadStickyEventsForeachFunction" cname="GstPadStickyEventsForeachFunction">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="event" type="GstEvent**">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="PadUnlinkFunction" cname="GstPadUnlinkFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="pad" type="GstPad*"/>
+        <parameter name="parent" type="GstObject*"/>
+      </parameters>
+    </callback>
+    <callback name="PluginFeatureFilter" cname="GstPluginFeatureFilter">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="feature" type="GstPluginFeature*"/>
+        <parameter closure="1" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="PluginFilter" cname="GstPluginFilter">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="plugin" type="GstPlugin*"/>
+        <parameter closure="1" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="PluginInitFullFunc" cname="GstPluginInitFullFunc">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="plugin" type="GstPlugin*"/>
+        <parameter closure="1" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="PluginInitFunc" cname="GstPluginInitFunc">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="plugin" type="GstPlugin*"/>
+      </parameters>
+    </callback>
+    <callback name="StructureForeachFunc" cname="GstStructureForeachFunc">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="field_id" type="guint32"/>
+        <parameter name="value" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="StructureMapFunc" cname="GstStructureMapFunc">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="field_id" type="guint32"/>
+        <parameter name="value" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="TagForeachFunc" cname="GstTagForeachFunc">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="list" type="GstTagList*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="tag" type="const-gchar*"/>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="TagMergeFunc" cname="GstTagMergeFunc">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="dest" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="src" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="TaskFunction" cname="GstTaskFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter closure="0" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="TaskPoolFunction" cname="GstTaskPoolFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter closure="0" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="TaskThreadFunc" cname="GstTaskThreadFunc">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="task" type="GstTask*"/>
+        <parameter name="thread" type="GThread*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="2" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="TypeFindFunction" cname="GstTypeFindFunction">
+      <return-type type="void"/>
+      <parameters>
+        <parameter name="find" type="GstTypeFind*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter closure="1" name="user_data" type="gpointer"/>
+      </parameters>
+    </callback>
+    <callback name="ValueCompareFunc" cname="GstValueCompareFunc">
+      <return-type type="gint"/>
+      <parameters>
+        <parameter name="value1" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="value2" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="ValueDeserializeFunc" cname="GstValueDeserializeFunc">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter name="dest" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+        <parameter name="s" type="const-gchar*"/>
+      </parameters>
+    </callback>
+    <callback name="ValueSerializeFunc" cname="GstValueSerializeFunc">
+      <return-type type="gchar*" owned="true"/>
+      <parameters>
+        <parameter name="value1" type="GValue*">
+          <warning>missing glib:type-name</warning>
+        </parameter>
+      </parameters>
+    </callback>
     <interface name="ChildProxy" cname="GstChildProxy" abstract="false" opaque="false" hidden="false">
       <class_struct cname="GstChildProxyInterface">
         <field cname="parent" access="public" writeable="false" readable="true" name="Parent" type="GTypeInterface">
@@ -967,7 +1529,7 @@
       <method name="Find" cname="gst_allocator_find" shared="true">
         <return-type type="GstAllocator*" owned="true"/>
         <parameters>
-          <parameter name="name" type="const-gchar*"/>
+          <parameter allow-none="1" name="name" type="const-gchar*"/>
         </parameters>
       </method>
       <method name="Register" cname="gst_allocator_register" shared="true">
@@ -1965,7 +2527,8 @@
         <method vm="send_event"/>
         <method vm="query"/>
         <method vm="post_message"/>
-        <field cname="_gst_reserved" access="private" writeable="false" readable="false" name="_gstGstReserved" type="gpointer" array="true" array_len="19"/>
+        <method vm="set_context"/>
+        <field cname="_gst_reserved" access="private" writeable="false" readable="false" name="_gstGstReserved" type="gpointer" array="true" array_len="18"/>
       </class_struct>
       <method name="AddMetadata" cname="gst_element_class_add_metadata" shared="true">
         <return-type type="void"/>
@@ -2122,6 +2685,14 @@
         <return-type type="gboolean"/>
         <parameters>
           <parameter name="clock" type="GstClock*"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="SetContext" cname="set_context">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="context" type="GstContext*">
+            <warning>missing glib:type-name</warning>
+          </parameter>
         </parameters>
       </virtual_method>
       <virtual_method name="SetState" cname="set_state">
@@ -2334,7 +2905,7 @@
         <return-type type="gboolean"/>
         <parameters>
           <parameter name="format" type="GstFormat"/>
-          <parameter name="duration" type="gint64*" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="duration" type="gint64*" owned="true" pass_as="out"/>
         </parameters>
       </method>
       <method name="QueryPosition" cname="gst_element_query_position">
@@ -2410,6 +2981,14 @@
         <return-type type="gboolean"/>
         <parameters>
           <parameter name="clock" type="GstClock*"/>
+        </parameters>
+      </method>
+      <method name="SetContext" cname="gst_element_set_context">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="context" type="GstContext*">
+            <warning>missing glib:type-name</warning>
+          </parameter>
         </parameters>
       </method>
       <method name="SetLockedState" cname="gst_element_set_locked_state">
@@ -2648,7 +3227,7 @@
         <return-type type="gboolean"/>
         <parameters>
           <parameter name="pad" type="GstPad*"/>
-          <parameter name="parent" type="GstObject*"/>
+          <parameter allow-none="1" name="parent" type="GstObject*"/>
           <parameter name="mode" type="GstPadMode"/>
           <parameter name="active" type="gboolean"/>
         </parameters>
@@ -2657,7 +3236,7 @@
         <return-type type="gboolean"/>
         <parameters>
           <parameter name="pad" type="GstPad*"/>
-          <parameter name="parent" type="GstObject*"/>
+          <parameter allow-none="1" name="parent" type="GstObject*"/>
           <parameter name="mode" type="GstPadMode"/>
           <parameter name="active" type="gboolean"/>
         </parameters>
@@ -2956,7 +3535,7 @@
       <method name="EventDefault" cname="gst_pad_event_default">
         <return-type type="gboolean"/>
         <parameters>
-          <parameter name="parent" type="GstObject*"/>
+          <parameter allow-none="1" name="parent" type="GstObject*"/>
           <parameter name="event" type="GstEvent*" owned="true">
             <warning>missing glib:type-name</warning>
           </parameter>
@@ -3030,6 +3609,10 @@
           <parameter name="idx" type="guint"/>
         </parameters>
       </method>
+      <method name="GetStreamId" cname="gst_pad_get_stream_id">
+        <return-type type="gchar*" owned="true"/>
+        <parameters/>
+      </method>
       <method name="HasCurrentCaps" cname="gst_pad_has_current_caps">
         <return-type type="gboolean"/>
         <parameters/>
@@ -3061,7 +3644,7 @@
           <warning>missing glib:type-name</warning>
         </return-type>
         <parameters>
-          <parameter name="parent" type="GstObject*"/>
+          <parameter allow-none="1" name="parent" type="GstObject*"/>
         </parameters>
       </method>
       <method name="Link" cname="gst_pad_link">
@@ -3226,7 +3809,7 @@
       <method name="QueryDefault" cname="gst_pad_query_default">
         <return-type type="gboolean"/>
         <parameters>
-          <parameter name="parent" type="GstObject*"/>
+          <parameter allow-none="1" name="parent" type="GstObject*"/>
           <parameter name="query" type="GstQuery*">
             <warning>missing glib:type-name</warning>
           </parameter>
@@ -3243,7 +3826,7 @@
         <return-type type="gboolean"/>
         <parameters>
           <parameter name="format" type="GstFormat"/>
-          <parameter name="cur" type="gint64*" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="cur" type="gint64*" owned="true" pass_as="out"/>
         </parameters>
       </method>
       <method name="RemoveProbe" cname="gst_pad_remove_probe">
@@ -3376,6 +3959,14 @@
       <method name="StopTask" cname="gst_pad_stop_task">
         <return-type type="gboolean"/>
         <parameters/>
+      </method>
+      <method name="StoreStickyEvent" cname="gst_pad_store_sticky_event">
+        <return-type type="GstFlowReturn"/>
+        <parameters>
+          <parameter name="event" type="GstEvent*">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+        </parameters>
       </method>
       <method name="Unlink" cname="gst_pad_unlink">
         <return-type type="gboolean"/>
@@ -3561,7 +4152,7 @@
       <method name="UseClock" cname="gst_pipeline_use_clock">
         <return-type type="void"/>
         <parameters>
-          <parameter name="clock" type="GstClock*"/>
+          <parameter allow-none="1" name="clock" type="GstClock*"/>
         </parameters>
       </method>
       <property name="AutoFlushBus" cname="auto-flush-bus" type="gboolean" readable="true" writeable="true" construct="false" construct-only="false"/>
@@ -3633,18 +4224,18 @@
       <method name="AddDependency" cname="gst_plugin_add_dependency">
         <return-type type="void"/>
         <parameters>
-          <parameter name="env_vars" type="const-gchar*"/>
-          <parameter name="paths" type="const-gchar*"/>
-          <parameter name="names" type="const-gchar*"/>
+          <parameter allow-none="1" name="env_vars" type="const-gchar*"/>
+          <parameter allow-none="1" name="paths" type="const-gchar*"/>
+          <parameter allow-none="1" name="names" type="const-gchar*"/>
           <parameter name="flags" type="GstPluginDependencyFlags"/>
         </parameters>
       </method>
       <method name="AddDependencySimple" cname="gst_plugin_add_dependency_simple">
         <return-type type="void"/>
         <parameters>
-          <parameter name="env_vars" type="const-gchar*"/>
-          <parameter name="paths" type="const-gchar*"/>
-          <parameter name="names" type="const-gchar*"/>
+          <parameter allow-none="1" name="env_vars" type="const-gchar*"/>
+          <parameter allow-none="1" name="paths" type="const-gchar*"/>
+          <parameter allow-none="1" name="names" type="const-gchar*"/>
           <parameter name="flags" type="GstPluginDependencyFlags"/>
         </parameters>
       </method>
@@ -3749,6 +4340,10 @@
         <return-type type="GstPlugin*" owned="true"/>
         <parameters/>
       </method>
+      <method name="GetPluginName" cname="gst_plugin_feature_get_plugin_name">
+        <return-type type="const-gchar*"/>
+        <parameters/>
+      </method>
       <method name="GetRank" cname="gst_plugin_feature_get_rank">
         <return-type type="guint"/>
         <parameters/>
@@ -3778,7 +4373,7 @@
         <return-type type="GstFlowReturn"/>
         <parameters>
           <parameter name="pad" type="GstPad*"/>
-          <parameter name="parent" type="GstObject*"/>
+          <parameter allow-none="1" name="parent" type="GstObject*"/>
           <parameter name="buffer" type="GstBuffer*" owned="true">
             <warning>missing glib:type-name</warning>
           </parameter>
@@ -3788,7 +4383,7 @@
         <return-type type="GstFlowReturn"/>
         <parameters>
           <parameter name="pad" type="GstPad*"/>
-          <parameter name="parent" type="GstObject*"/>
+          <parameter allow-none="1" name="parent" type="GstObject*"/>
           <parameter name="list" type="GstBufferList*" owned="true">
             <warning>missing glib:type-name</warning>
           </parameter>
@@ -3812,7 +4407,7 @@
         </return-type>
         <parameters>
           <parameter name="pad" type="GstPad*"/>
-          <parameter name="parent" type="GstObject*"/>
+          <parameter allow-none="1" name="parent" type="GstObject*"/>
         </parameters>
       </method>
       <method name="GetInternal" cname="gst_proxy_pad_get_internal">
@@ -4270,7 +4865,7 @@
       </constructor>
       <constructor cname="gst_buffer_new_wrapped">
         <parameters>
-          <parameter name="data" type="gpointer" array="true" array_length_param_index="1"/>
+          <parameter name="data" type="gpointer*" owned="true" array="true" array_length_param_index="1"/>
           <parameter name="size" type="gsize"/>
         </parameters>
       </constructor>
@@ -4327,7 +4922,7 @@
         </parameters>
       </method>
       <method name="CopyInto" cname="gst_buffer_copy_into">
-        <return-type type="void"/>
+        <return-type type="gboolean"/>
         <parameters>
           <parameter name="src" type="GstBuffer*">
             <warning>missing glib:type-name</warning>
@@ -4355,11 +4950,20 @@
           <parameter name="size" type="gsize"/>
         </parameters>
       </method>
+      <method name="ExtractDup" cname="gst_buffer_extract_dup">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="offset" type="gsize"/>
+          <parameter name="size" type="gsize"/>
+          <parameter name="dest" type="gpointer**" owned="true" pass_as="out" array="true" array_length_param_index="3"/>
+          <parameter name="dest_size" type="gsize*" owned="true" pass_as="out"/>
+        </parameters>
+      </method>
       <method name="Fill" cname="gst_buffer_fill">
         <return-type type="gsize"/>
         <parameters>
           <parameter name="offset" type="gsize"/>
-          <parameter name="src" type="gpointer"/>
+          <parameter name="src" type="gconstpointer" array="true" array_length_param_index="2"/>
           <parameter name="size" type="gsize"/>
         </parameters>
       </method>
@@ -4472,7 +5076,7 @@
         <return-type type="gint"/>
         <parameters>
           <parameter name="offset" type="gsize"/>
-          <parameter name="mem" type="gpointer"/>
+          <parameter name="mem" type="gconstpointer" array="true" array_length_param_index="2"/>
           <parameter name="size" type="gsize"/>
         </parameters>
       </method>
@@ -4564,7 +5168,7 @@
         </parameters>
       </method>
       <method name="ResizeRange" cname="gst_buffer_resize_range">
-        <return-type type="void"/>
+        <return-type type="gboolean"/>
         <parameters>
           <parameter name="idx" type="guint"/>
           <parameter name="length" type="gint"/>
@@ -4585,6 +5189,9 @@
             <warning>missing glib:type-name</warning>
           </parameter>
         </parameters>
+      </method>
+      <method name="GetMaxMemory" cname="gst_buffer_get_max_memory" shared="true">
+        <return-type type="guint"/>
       </method>
     </boxed>
     <boxed name="BufferList" cname="GstBufferList" opaque="false" hidden="false">
@@ -4672,6 +5279,17 @@
           </parameter>
         </parameters>
       </method>
+      <method name="AppendStructureFull" cname="gst_caps_append_structure_full">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="structure" type="GstStructure*" owned="true">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+          <parameter allow-none="1" name="features" type="GstCapsFeatures*" owned="true">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+        </parameters>
+      </method>
       <method name="CanIntersect" cname="gst_caps_can_intersect">
         <return-type type="gboolean"/>
         <parameters>
@@ -4693,6 +5311,14 @@
           <warning>missing glib:type-name</warning>
         </return-type>
         <parameters/>
+      </method>
+      <method name="GetFeatures" cname="gst_caps_get_features">
+        <return-type type="GstCapsFeatures*">
+          <warning>missing glib:type-name</warning>
+        </return-type>
+        <parameters>
+          <parameter name="index" type="guint"/>
+        </parameters>
       </method>
       <method name="GetSize" cname="gst_caps_get_size">
         <return-type type="guint"/>
@@ -4787,6 +5413,17 @@
           </parameter>
         </parameters>
       </method>
+      <method name="IsSubsetStructureFull" cname="gst_caps_is_subset_structure_full">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter name="structure" type="GstStructure*">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+          <parameter allow-none="1" name="features" type="GstCapsFeatures*">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+        </parameters>
+      </method>
       <method name="Merge" cname="gst_caps_merge">
         <return-type type="GstCaps*" owned="true">
           <warning>missing glib:type-name</warning>
@@ -4807,6 +5444,19 @@
           </parameter>
         </parameters>
       </method>
+      <method name="MergeStructureFull" cname="gst_caps_merge_structure_full">
+        <return-type type="GstCaps*" owned="true">
+          <warning>missing glib:type-name</warning>
+        </return-type>
+        <parameters>
+          <parameter name="structure" type="GstStructure*" owned="true">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+          <parameter allow-none="1" name="features" type="GstCapsFeatures*" owned="true">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+        </parameters>
+      </method>
       <method name="Normalize" cname="gst_caps_normalize">
         <return-type type="GstCaps*" owned="true">
           <warning>missing glib:type-name</warning>
@@ -4817,6 +5467,15 @@
         <return-type type="void"/>
         <parameters>
           <parameter name="idx" type="guint"/>
+        </parameters>
+      </method>
+      <method name="SetFeatures" cname="gst_caps_set_features">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="index" type="guint"/>
+          <parameter allow-none="1" name="features" type="GstCapsFeatures*" owned="true">
+            <warning>missing glib:type-name</warning>
+          </parameter>
         </parameters>
       </method>
       <method name="SetValue" cname="gst_caps_set_value">
@@ -4871,6 +5530,105 @@
         </parameters>
       </method>
     </boxed>
+    <boxed name="CapsFeatures" cname="GstCapsFeatures" opaque="false" hidden="false">
+      <method name="GetType" cname="gst_caps_features_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="gst_caps_features_new_any" disable_void_ctor=""/>
+      <constructor cname="gst_caps_features_new_empty" disable_void_ctor=""/>
+      <method name="Add" cname="gst_caps_features_add">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="feature" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="AddId" cname="gst_caps_features_add_id">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="feature" type="guint32"/>
+        </parameters>
+      </method>
+      <method name="Contains" cname="gst_caps_features_contains">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter name="feature" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="ContainsId" cname="gst_caps_features_contains_id">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter name="feature" type="guint32"/>
+        </parameters>
+      </method>
+      <method name="Copy" cname="gst_caps_features_copy">
+        <return-type type="GstCapsFeatures*" owned="true">
+          <warning>missing glib:type-name</warning>
+        </return-type>
+        <parameters/>
+      </method>
+      <method name="Free" cname="gst_caps_features_free">
+        <return-type type="void"/>
+        <parameters/>
+      </method>
+      <method name="GetNth" cname="gst_caps_features_get_nth">
+        <return-type type="const-gchar*"/>
+        <parameters>
+          <parameter name="i" type="guint"/>
+        </parameters>
+      </method>
+      <method name="GetNthId" cname="gst_caps_features_get_nth_id">
+        <return-type type="guint32"/>
+        <parameters>
+          <parameter name="i" type="guint"/>
+        </parameters>
+      </method>
+      <method name="GetSize" cname="gst_caps_features_get_size">
+        <return-type type="guint"/>
+        <parameters/>
+      </method>
+      <method name="IsAny" cname="gst_caps_features_is_any">
+        <return-type type="gboolean"/>
+        <parameters/>
+      </method>
+      <method name="IsEqual" cname="gst_caps_features_is_equal">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter name="features2" type="GstCapsFeatures*">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="Remove" cname="gst_caps_features_remove">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="feature" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="RemoveId" cname="gst_caps_features_remove_id">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="feature" type="guint32"/>
+        </parameters>
+      </method>
+      <method name="SetParentRefcount" cname="gst_caps_features_set_parent_refcount">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter name="refcount" type="gint"/>
+        </parameters>
+      </method>
+      <method name="ToString" cname="gst_caps_features_to_string">
+        <return-type type="gchar*" owned="true"/>
+        <parameters/>
+      </method>
+      <method name="FromString" cname="gst_caps_features_from_string" shared="true">
+        <return-type type="GstCapsFeatures*" owned="true">
+          <warning>missing glib:type-name</warning>
+        </return-type>
+        <parameters>
+          <parameter name="features" type="const-gchar*"/>
+        </parameters>
+      </method>
+    </boxed>
     <struct name="ClockEntry" cname="GstClockEntry" opaque="true" hidden="false">
       <field cname="refcount" access="public" writeable="true" readable="true" name="Refcount" type="gint"/>
       <field cname="clock" access="public" writeable="true" readable="true" name="Clock" type="GstClock*"/>
@@ -4886,6 +5644,43 @@
       <field cname="_gst_reserved" access="private" writeable="false" readable="false" name="_gstGstReserved" type="gpointer" array="true" array_len="4"/>
     </struct>
     <struct name="ClockPrivate" cname="GstClockPrivate" opaque="true" hidden="true"/>
+    <boxed name="Context" cname="GstContext" opaque="false" hidden="false">
+      <method name="GetType" cname="gst_context_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="gst_context_new">
+        <parameters>
+          <parameter name="context_type" type="const-gchar*"/>
+          <parameter name="persistent" type="gboolean"/>
+        </parameters>
+      </constructor>
+      <method name="GetContextType" cname="gst_context_get_context_type">
+        <return-type type="const-gchar*"/>
+        <parameters/>
+      </method>
+      <method name="GetStructure" cname="gst_context_get_structure">
+        <return-type type="GstStructure*">
+          <warning>missing glib:type-name</warning>
+        </return-type>
+        <parameters/>
+      </method>
+      <method name="HasContextType" cname="gst_context_has_context_type">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter name="context_type" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="IsPersistent" cname="gst_context_is_persistent">
+        <return-type type="gboolean"/>
+        <parameters/>
+      </method>
+      <method name="WritableStructure" cname="gst_context_writable_structure">
+        <return-type type="GstStructure*" owned="true">
+          <warning>missing glib:type-name</warning>
+        </return-type>
+        <parameters/>
+      </method>
+    </boxed>
     <boxed name="DateTime" cname="GstDateTime" opaque="false" hidden="false">
       <method name="GetType" cname="gst_date_time_get_type" shared="true">
         <return-type type="GType"/>
@@ -5255,6 +6050,12 @@
           <parameter allow-none="1" name="duration" type="guint64" owned="true" pass_as="out"/>
         </parameters>
       </method>
+      <method name="ParseGroupId" cname="gst_event_parse_group_id">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter name="group_id" type="guint*" owned="true" pass_as="out"/>
+        </parameters>
+      </method>
       <method name="ParseLatency" cname="gst_event_parse_latency">
         <return-type type="void"/>
         <parameters>
@@ -5293,8 +6094,8 @@
       <method name="ParseSegmentDone" cname="gst_event_parse_segment_done">
         <return-type type="void"/>
         <parameters>
-          <parameter name="format" type="GstFormat" owned="true" pass_as="out"/>
-          <parameter name="position" type="gint64*" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="format" type="GstFormat" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="position" type="gint64*" owned="true" pass_as="out"/>
         </parameters>
       </method>
       <method name="ParseSinkMessage" cname="gst_event_parse_sink_message">
@@ -5313,6 +6114,12 @@
           <parameter allow-none="1" name="rate" type="gdouble*" owned="true" pass_as="out"/>
           <parameter allow-none="1" name="flush" type="gboolean*" owned="true" pass_as="out"/>
           <parameter allow-none="1" name="intermediate" type="gboolean*" owned="true" pass_as="out"/>
+        </parameters>
+      </method>
+      <method name="ParseStreamFlags" cname="gst_event_parse_stream_flags">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="flags" type="GstStreamFlags" owned="true" pass_as="out"/>
         </parameters>
       </method>
       <method name="ParseStreamStart" cname="gst_event_parse_stream_start">
@@ -5344,10 +6151,22 @@
           <parameter name="uid" type="gchar*" owned="true" pass_as="out"/>
         </parameters>
       </method>
+      <method name="SetGroupId" cname="gst_event_set_group_id">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="group_id" type="guint"/>
+        </parameters>
+      </method>
       <method name="SetSeqnum" cname="gst_event_set_seqnum">
         <return-type type="void"/>
         <parameters>
           <parameter name="seqnum" type="guint32"/>
+        </parameters>
+      </method>
+      <method name="SetStreamFlags" cname="gst_event_set_stream_flags">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="flags" type="GstStreamFlags"/>
         </parameters>
       </method>
       <method name="WritableStructure" cname="gst_event_writable_structure">
@@ -5488,7 +6307,7 @@
       <constructor cname="gst_memory_new_wrapped">
         <parameters>
           <parameter name="flags" type="GstMemoryFlags"/>
-          <parameter name="data" type="gpointer"/>
+          <parameter name="data" type="gpointer" array="true" array_length_param_index="4"/>
           <parameter name="maxsize" type="gsize"/>
           <parameter name="offset" type="gsize"/>
           <parameter name="size" type="gsize"/>
@@ -5519,6 +6338,12 @@
             <warning>missing glib:type-name</warning>
           </parameter>
           <parameter name="offset" type="gsize"/>
+        </parameters>
+      </method>
+      <method name="IsType" cname="gst_memory_is_type">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter name="mem_type" type="const-gchar*"/>
         </parameters>
       </method>
       <method name="MakeMapped" cname="gst_memory_make_mapped">
@@ -5655,6 +6480,14 @@
           <parameter name="debug" type="const-gchar*"/>
         </parameters>
       </constructor>
+      <constructor cname="gst_message_new_have_context">
+        <parameters>
+          <parameter name="src" type="GstObject*"/>
+          <parameter name="context" type="GstContext*" owned="true">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+        </parameters>
+      </constructor>
       <constructor cname="gst_message_new_info">
         <parameters>
           <parameter name="src" type="GstObject*"/>
@@ -5667,6 +6500,12 @@
       <constructor cname="gst_message_new_latency">
         <parameters>
           <parameter name="src" type="GstObject*"/>
+        </parameters>
+      </constructor>
+      <constructor cname="gst_message_new_need_context">
+        <parameters>
+          <parameter name="src" type="GstObject*"/>
+          <parameter name="context_type" type="const-gchar*"/>
         </parameters>
       </constructor>
       <constructor cname="gst_message_new_new_clock">
@@ -5826,7 +6665,7 @@
       <method name="ParseAsyncDone" cname="gst_message_parse_async_done">
         <return-type type="void"/>
         <parameters>
-          <parameter name="running_time" type="guint64" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="running_time" type="guint64" owned="true" pass_as="out"/>
         </parameters>
       </method>
       <method name="ParseBuffering" cname="gst_message_parse_buffering">
@@ -5857,6 +6696,12 @@
           <parameter allow-none="1" name="ready" type="gboolean*" owned="true" pass_as="out"/>
         </parameters>
       </method>
+      <method name="ParseContextType" cname="gst_message_parse_context_type">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter allow-none="1" name="context_type" type="gchar*" owned="true" pass_as="out"/>
+        </parameters>
+      </method>
       <method name="ParseError" cname="gst_message_parse_error">
         <return-type type="void"/>
         <parameters>
@@ -5864,6 +6709,20 @@
             <warning>missing glib:type-name</warning>
           </parameter>
           <parameter allow-none="1" name="debug" type="gchar*" owned="true" pass_as="out"/>
+        </parameters>
+      </method>
+      <method name="ParseGroupId" cname="gst_message_parse_group_id">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter allow-none="1" name="group_id" type="guint*" owned="true" pass_as="out"/>
+        </parameters>
+      </method>
+      <method name="ParseHaveContext" cname="gst_message_parse_have_context">
+        <return-type type="void"/>
+        <parameters>
+          <parameter allow-none="1" name="context" type="GstContext**" owned="true" pass_as="out">
+            <warning>missing glib:type-name</warning>
+          </parameter>
         </parameters>
       </method>
       <method name="ParseInfo" cname="gst_message_parse_info">
@@ -5918,27 +6777,27 @@
       <method name="ParseRequestState" cname="gst_message_parse_request_state">
         <return-type type="void"/>
         <parameters>
-          <parameter name="state" type="GstState" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="state" type="GstState" owned="true" pass_as="out"/>
         </parameters>
       </method>
       <method name="ParseResetTime" cname="gst_message_parse_reset_time">
         <return-type type="void"/>
         <parameters>
-          <parameter name="running_time" type="guint64" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="running_time" type="guint64" owned="true" pass_as="out"/>
         </parameters>
       </method>
       <method name="ParseSegmentDone" cname="gst_message_parse_segment_done">
         <return-type type="void"/>
         <parameters>
-          <parameter name="format" type="GstFormat" owned="true" pass_as="out"/>
-          <parameter name="position" type="gint64*" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="format" type="GstFormat" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="position" type="gint64*" owned="true" pass_as="out"/>
         </parameters>
       </method>
       <method name="ParseSegmentStart" cname="gst_message_parse_segment_start">
         <return-type type="void"/>
         <parameters>
-          <parameter name="format" type="GstFormat" owned="true" pass_as="out"/>
-          <parameter name="position" type="gint64*" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="format" type="GstFormat" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="position" type="gint64*" owned="true" pass_as="out"/>
         </parameters>
       </method>
       <method name="ParseStateChanged" cname="gst_message_parse_state_changed">
@@ -6022,6 +6881,12 @@
           <parameter name="buffering_left" type="gint64"/>
         </parameters>
       </method>
+      <method name="SetGroupId" cname="gst_message_set_group_id">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="group_id" type="guint"/>
+        </parameters>
+      </method>
       <method name="SetQosStats" cname="gst_message_set_qos_stats">
         <return-type type="void"/>
         <parameters>
@@ -6058,6 +6923,12 @@
       <field cname="info" access="public" writeable="true" readable="true" name="Info" type="GstMetaInfo*">
         <warning>missing glib:type-name</warning>
       </field>
+      <method name="ApiTypeGetTags" cname="gst_meta_api_type_get_tags" shared="true">
+        <return-type type="const-gchar**" array="true" null_term_array="true"/>
+        <parameters>
+          <parameter name="api" type="GType"/>
+        </parameters>
+      </method>
       <method name="ApiTypeHasTag" cname="gst_meta_api_type_has_tag" shared="true">
         <return-type type="gboolean"/>
         <parameters>
@@ -6414,6 +7285,11 @@
           </parameter>
         </parameters>
       </constructor>
+      <constructor cname="gst_query_new_context">
+        <parameters>
+          <parameter name="context_type" type="const-gchar*"/>
+        </parameters>
+      </constructor>
       <constructor cname="gst_query_new_convert">
         <parameters>
           <parameter name="src_format" type="GstFormat"/>
@@ -6498,7 +7374,7 @@
         <return-type type="gboolean"/>
         <parameters>
           <parameter name="api" type="GType"/>
-          <parameter allow-none="1" name="index" type="guint*" owned="true" pass_as="out"/>
+          <parameter allow-none="1" name="index" type="guint" pass_as="out"/>
         </parameters>
       </method>
       <method name="GetNAllocationMetas" cname="gst_query_get_n_allocation_metas">
@@ -6543,7 +7419,7 @@
       <method name="ParseAcceptCaps" cname="gst_query_parse_accept_caps">
         <return-type type="void"/>
         <parameters>
-          <parameter name="caps" type="GstCaps**" owned="true" pass_as="out">
+          <parameter name="caps" type="GstCaps**" pass_as="out">
             <warning>missing glib:type-name</warning>
           </parameter>
         </parameters>
@@ -6591,7 +7467,7 @@
       <method name="ParseCaps" cname="gst_query_parse_caps">
         <return-type type="void"/>
         <parameters>
-          <parameter name="filter" type="GstCaps**" owned="true" pass_as="out">
+          <parameter name="filter" type="GstCaps**" pass_as="out">
             <warning>missing glib:type-name</warning>
           </parameter>
         </parameters>
@@ -6599,9 +7475,23 @@
       <method name="ParseCapsResult" cname="gst_query_parse_caps_result">
         <return-type type="void"/>
         <parameters>
-          <parameter name="caps" type="GstCaps**" owned="true" pass_as="out">
+          <parameter name="caps" type="GstCaps**" pass_as="out">
             <warning>missing glib:type-name</warning>
           </parameter>
+        </parameters>
+      </method>
+      <method name="ParseContext" cname="gst_query_parse_context">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="context" type="GstContext**" pass_as="out">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="ParseContextType" cname="gst_query_parse_context_type">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter allow-none="1" name="context_type" type="const-gchar*" pass_as="out"/>
         </parameters>
       </method>
       <method name="ParseConvert" cname="gst_query_parse_convert">
@@ -6638,7 +7528,7 @@
         <return-type type="GType"/>
         <parameters>
           <parameter name="index" type="guint"/>
-          <parameter allow-none="1" name="params" type="GstStructure**" owned="true" pass_as="out">
+          <parameter allow-none="1" name="params" type="GstStructure**" pass_as="out">
             <warning>missing glib:type-name</warning>
           </parameter>
         </parameters>
@@ -6647,7 +7537,7 @@
         <return-type type="void"/>
         <parameters>
           <parameter name="index" type="guint"/>
-          <parameter allow-none="1" name="allocator" type="GstAllocator*" pass_as="out"/>
+          <parameter allow-none="1" name="allocator" type="GstAllocator*" owned="true" pass_as="out"/>
           <parameter allow-none="1" name="params" type="GstAllocationParams*" pass_as="out">
             <warning>missing glib:type-name</warning>
           </parameter>
@@ -6724,7 +7614,25 @@
           <parameter allow-none="1" name="uri" type="gchar*" owned="true" pass_as="out"/>
         </parameters>
       </method>
+      <method name="ParseUriRedirection" cname="gst_query_parse_uri_redirection">
+        <return-type type="void"/>
+        <parameters>
+          <parameter allow-none="1" name="uri" type="gchar*" owned="true" pass_as="out"/>
+        </parameters>
+      </method>
       <method name="RemoveNthAllocationMeta" cname="gst_query_remove_nth_allocation_meta">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="index" type="guint"/>
+        </parameters>
+      </method>
+      <method name="RemoveNthAllocationParam" cname="gst_query_remove_nth_allocation_param">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="index" type="guint"/>
+        </parameters>
+      </method>
+      <method name="RemoveNthAllocationPool" cname="gst_query_remove_nth_allocation_pool">
         <return-type type="void"/>
         <parameters>
           <parameter name="index" type="guint"/>
@@ -6765,6 +7673,14 @@
         <return-type type="void"/>
         <parameters>
           <parameter name="caps" type="GstCaps*">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="SetContext" cname="gst_query_set_context">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="context" type="GstContext*">
             <warning>missing glib:type-name</warning>
           </parameter>
         </parameters>
@@ -6855,6 +7771,12 @@
         </parameters>
       </method>
       <method name="SetUri" cname="gst_query_set_uri">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="uri" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="SetUriRedirection" cname="gst_query_set_uri_redirection">
         <return-type type="void"/>
         <parameters>
           <parameter name="uri" type="const-gchar*"/>
@@ -7052,6 +7974,11 @@
           <parameter name="name" type="const-gchar*"/>
         </parameters>
       </constructor>
+      <constructor cname="gst_structure_new_from_string">
+        <parameters>
+          <parameter name="string" type="const-gchar*"/>
+        </parameters>
+      </constructor>
       <constructor cname="gst_structure_new_id_empty">
         <parameters>
           <parameter name="quark" type="guint32"/>
@@ -7066,7 +7993,7 @@
         </parameters>
       </method>
       <method name="Copy" cname="gst_structure_copy">
-        <return-type type="GstStructure*">
+        <return-type type="GstStructure*" owned="true">
           <warning>missing glib:type-name</warning>
         </return-type>
         <parameters/>
@@ -7415,7 +8342,7 @@
         <return-type type="gboolean"/>
         <parameters>
           <parameter name="tag" type="const-gchar*"/>
-          <parameter name="value" type="gboolean*" owned="true" pass_as="out"/>
+          <parameter name="value" type="gboolean"/>
         </parameters>
       </method>
       <method name="GetBooleanIndex" cname="gst_tag_list_get_boolean_index">
@@ -7885,7 +8812,7 @@
       <method name="Register" cname="gst_type_find_register" shared="true">
         <return-type type="gboolean"/>
         <parameters>
-          <parameter name="plugin" type="GstPlugin*"/>
+          <parameter allow-none="1" name="plugin" type="GstPlugin*"/>
           <parameter name="name" type="const-gchar*"/>
           <parameter name="rank" type="guint"/>
           <parameter closure="6" destroy="7" scope="notified" name="func" type="GstTypeFindFunction"/>
@@ -7905,1118 +8832,18 @@
       <field cname="deserialize" access="public" writeable="true" readable="true" name="Deserialize" type="GstValueDeserializeFunc"/>
       <field cname="_gst_reserved" access="private" writeable="false" readable="false" name="_gstGstReserved" type="gpointer" array="true" array_len="4"/>
     </struct>
-    <callback name="BufferForeachMetaFunc" cname="GstBufferForeachMetaFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="buffer" type="GstBuffer*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="meta" type="GstMeta**">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="BufferListFunc" cname="GstBufferListFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="buffer" type="GstBuffer**">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="idx" type="guint"/>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="BusFunc" cname="GstBusFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="bus" type="GstBus*"/>
-        <parameter name="message" type="GstMessage*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="BusSyncHandler" cname="GstBusSyncHandler">
-      <return-type type="GstBusSyncReply"/>
-      <parameters>
-        <parameter name="bus" type="GstBus*"/>
-        <parameter name="message" type="GstMessage*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="ClockCallback" cname="GstClockCallback">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="clock" type="GstClock*"/>
-        <parameter name="time" type="guint64"/>
-        <parameter name="id" type="gpointer"/>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="ControlBindingConvert" cname="GstControlBindingConvert">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="binding" type="GstControlBinding*"/>
-        <parameter name="src_value" type="gdouble"/>
-        <parameter name="dest_value" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="ControlSourceGetValue" cname="GstControlSourceGetValue">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="self" type="GstControlSource*"/>
-        <parameter name="timestamp" type="guint64"/>
-        <parameter name="value" type="gdouble"/>
-      </parameters>
-    </callback>
-    <callback name="ControlSourceGetValueArray" cname="GstControlSourceGetValueArray">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="self" type="GstControlSource*"/>
-        <parameter name="timestamp" type="guint64"/>
-        <parameter name="interval" type="guint64"/>
-        <parameter name="n_values" type="guint"/>
-        <parameter name="values" type="gdouble"/>
-      </parameters>
-    </callback>
-    <callback name="DebugFuncPtr" cname="GstDebugFuncPtr">
-      <return-type type="void"/>
-    </callback>
-    <callback name="IteratorCopyFunction" cname="GstIteratorCopyFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="it" type="GstIterator*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="copy" type="GstIterator*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="IteratorFoldFunction" cname="GstIteratorFoldFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="item" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="_ret" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="IteratorForeachFunction" cname="GstIteratorForeachFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="item" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="IteratorFreeFunction" cname="GstIteratorFreeFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="it" type="GstIterator*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="IteratorItemFunction" cname="GstIteratorItemFunction">
-      <return-type type="GstIteratorItem"/>
-      <parameters>
-        <parameter name="it" type="GstIterator*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="item" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="IteratorNextFunction" cname="GstIteratorNextFunction">
-      <return-type type="GstIteratorResult"/>
-      <parameters>
-        <parameter name="it" type="GstIterator*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="_result" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="IteratorResyncFunction" cname="GstIteratorResyncFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="it" type="GstIterator*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="LogFunction" cname="GstLogFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="category" type="GstDebugCategory*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="level" type="GstDebugLevel"/>
-        <parameter name="file" type="const-gchar*"/>
-        <parameter name="function" type="const-gchar*"/>
-        <parameter name="line" type="gint"/>
-        <parameter name="_object" type="GObject*"/>
-        <parameter name="message" type="GstDebugMessage*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="MemoryCopyFunction" cname="GstMemoryCopyFunction">
-      <return-type type="GstMemory*" owned="true">
-        <warning>missing glib:type-name</warning>
-      </return-type>
-      <parameters>
-        <parameter name="mem" type="GstMemory*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="offset" type="gssize"/>
-        <parameter name="size" type="gssize"/>
-      </parameters>
-    </callback>
-    <callback name="MemoryIsSpanFunction" cname="GstMemoryIsSpanFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="mem1" type="GstMemory*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="mem2" type="GstMemory*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="offset" type="gsize"/>
-      </parameters>
-    </callback>
-    <callback hidden="0" name="MemoryMapFunction" cname="GstMemoryMapFunction">
-      <return-type type="gpointer"/>
-      <parameters>
-        <parameter name="mem" type="GstMemory*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="maxsize" type="gsize"/>
-        <parameter name="flags" type="GstMapFlags"/>
-      </parameters>
-    </callback>
-    <callback name="MemoryShareFunction" cname="GstMemoryShareFunction">
-      <return-type type="GstMemory*" owned="true">
-        <warning>missing glib:type-name</warning>
-      </return-type>
-      <parameters>
-        <parameter name="mem" type="GstMemory*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="offset" type="gssize"/>
-        <parameter name="size" type="gssize"/>
-      </parameters>
-    </callback>
-    <callback name="MemoryUnmapFunction" cname="GstMemoryUnmapFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="mem" type="GstMemory*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="MetaFreeFunction" cname="GstMetaFreeFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="meta" type="GstMeta*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="buffer" type="GstBuffer*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="MetaInitFunction" cname="GstMetaInitFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="meta" type="GstMeta*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="params" type="gpointer"/>
-        <parameter name="buffer" type="GstBuffer*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="MetaTransformFunction" cname="GstMetaTransformFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="transbuf" type="GstBuffer*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="meta" type="GstMeta*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="buffer" type="GstBuffer*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="type" type="guint32"/>
-        <parameter name="data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback hidden="0" name="MiniObjectCopyFunction" cname="GstMiniObjectCopyFunction">
-      <return-type type="GstMiniObject*">
-        <warning>missing glib:type-name</warning>
-      </return-type>
-      <parameters>
-        <parameter name="obj" type="GstMiniObject*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="MiniObjectDisposeFunction" cname="GstMiniObjectDisposeFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="obj" type="GstMiniObject*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="MiniObjectFreeFunction" cname="GstMiniObjectFreeFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="obj" type="GstMiniObject*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="MiniObjectNotify" cname="GstMiniObjectNotify">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="user_data" type="gpointer"/>
-        <parameter name="obj" type="GstMiniObject*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="PadActivateFunction" cname="GstPadActivateFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="parent" type="GstObject*"/>
-      </parameters>
-    </callback>
-    <callback name="PadActivateModeFunction" cname="GstPadActivateModeFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="parent" type="GstObject*"/>
-        <parameter name="mode" type="GstPadMode"/>
-        <parameter name="active" type="gboolean"/>
-      </parameters>
-    </callback>
-    <callback name="PadChainFunction" cname="GstPadChainFunction">
-      <return-type type="GstFlowReturn"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="parent" type="GstObject*"/>
-        <parameter name="buffer" type="GstBuffer*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="PadChainListFunction" cname="GstPadChainListFunction">
-      <return-type type="GstFlowReturn"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="parent" type="GstObject*"/>
-        <parameter name="list" type="GstBufferList*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="PadEventFunction" cname="GstPadEventFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="parent" type="GstObject*"/>
-        <parameter name="event" type="GstEvent*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="PadForwardFunction" cname="GstPadForwardFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="PadGetRangeFunction" cname="GstPadGetRangeFunction">
-      <return-type type="GstFlowReturn"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="parent" type="GstObject*"/>
-        <parameter name="offset" type="guint64"/>
-        <parameter name="length" type="guint"/>
-        <parameter name="buffer" type="GstBuffer**">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="PadIterIntLinkFunction" cname="GstPadIterIntLinkFunction">
-      <return-type type="GstIterator*" owned="true">
-        <warning>missing glib:type-name</warning>
-      </return-type>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="parent" type="GstObject*"/>
-      </parameters>
-    </callback>
-    <callback name="PadLinkFunction" cname="GstPadLinkFunction">
-      <return-type type="GstPadLinkReturn"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="parent" type="GstObject*"/>
-        <parameter name="peer" type="GstPad*"/>
-      </parameters>
-    </callback>
-    <callback name="PadProbeCallback" cname="GstPadProbeCallback">
-      <return-type type="GstPadProbeReturn"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="info" type="GstPadProbeInfo*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="PadQueryFunction" cname="GstPadQueryFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="parent" type="GstObject*"/>
-        <parameter name="query" type="GstQuery*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="PadStickyEventsForeachFunction" cname="GstPadStickyEventsForeachFunction">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="event" type="GstEvent**">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="PadUnlinkFunction" cname="GstPadUnlinkFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="parent" type="GstObject*"/>
-      </parameters>
-    </callback>
-    <callback name="PluginFeatureFilter" cname="GstPluginFeatureFilter">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="feature" type="GstPluginFeature*"/>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="PluginFilter" cname="GstPluginFilter">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="plugin" type="GstPlugin*"/>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="PluginInitFullFunc" cname="GstPluginInitFullFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="plugin" type="GstPlugin*"/>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="PluginInitFunc" cname="GstPluginInitFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="plugin" type="GstPlugin*"/>
-      </parameters>
-    </callback>
-    <callback name="StructureForeachFunc" cname="GstStructureForeachFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="field_id" type="guint32"/>
-        <parameter name="value" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="StructureMapFunc" cname="GstStructureMapFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="field_id" type="guint32"/>
-        <parameter name="value" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="TagForeachFunc" cname="GstTagForeachFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="list" type="GstTagList*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="tag" type="const-gchar*"/>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="TagMergeFunc" cname="GstTagMergeFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="dest" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="src" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="TaskFunction" cname="GstTaskFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="TaskPoolFunction" cname="GstTaskPoolFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="TaskThreadFunc" cname="GstTaskThreadFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="task" type="GstTask*"/>
-        <parameter name="thread" type="GThread*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="TypeFindFunction" cname="GstTypeFindFunction">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="find" type="GstTypeFind*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="user_data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="ValueCompareFunc" cname="GstValueCompareFunc">
-      <return-type type="gint"/>
-      <parameters>
-        <parameter name="value1" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="value2" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="ValueDeserializeFunc" cname="GstValueDeserializeFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="dest" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="s" type="const-gchar*"/>
-      </parameters>
-    </callback>
-    <callback name="ValueSerializeFunc" cname="GstValueSerializeFunc">
-      <return-type type="gchar*" owned="true"/>
-      <parameters>
-        <parameter name="value1" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="Alloc" cname="GstAllocFunc">
-      <return-type type="GstMemory*" owned="true">
-        <warning>missing glib:type-name</warning>
-      </return-type>
-      <parameters>
-        <parameter name="allocator" type="GstAllocator*"/>
-        <parameter name="size" type="gsize"/>
-        <parameter allow-none="1" name="params" type="GstAllocationParams*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="Free" cname="GstFreeFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="allocator" type="GstAllocator*"/>
-        <parameter name="memory" type="GstMemory*" owned="true">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="ElementAdded" cname="GstElementAddedFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="bin" type="GstBin*"/>
-        <parameter name="child" type="GstElement*"/>
-      </parameters>
-    </callback>
-    <callback name="ElementRemoved" cname="GstElementRemovedFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="bin" type="GstBin*"/>
-        <parameter name="child" type="GstElement*"/>
-      </parameters>
-    </callback>
-    <callback name="AddElement" cname="GstAddElementFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="bin" type="GstBin*"/>
-        <parameter name="element" type="GstElement*"/>
-      </parameters>
-    </callback>
-    <callback name="RemoveElement" cname="GstRemoveElementFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="bin" type="GstBin*"/>
-        <parameter name="element" type="GstElement*"/>
-      </parameters>
-    </callback>
-    <callback name="HandleMessage" cname="GstHandleMessageFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="bin" type="GstBin*"/>
-        <parameter name="message" type="GstMessage*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="DoLatency" cname="GstDoLatencyFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="bin" type="GstBin*"/>
-      </parameters>
-    </callback>
-    <callback name="GetOptions" cname="GstGetOptionsFunc">
-      <return-type type="const-gchar**" array="true" null_term_array="true"/>
-      <parameters>
-        <parameter name="pool" type="GstBufferPool*"/>
-      </parameters>
-    </callback>
-    <callback name="SetConfig" cname="GstSetConfigFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="pool" type="GstBufferPool*"/>
-        <parameter name="config" type="GstStructure*" owned="true">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="Start" cname="GstStartFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="pool" type="GstBufferPool*"/>
-      </parameters>
-    </callback>
-    <callback name="Stop" cname="GstStopFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="pool" type="GstBufferPool*"/>
-      </parameters>
-    </callback>
-    <callback name="AcquireBuffer" cname="GstAcquireBufferFunc">
-      <return-type type="GstFlowReturn"/>
-      <parameters>
-        <parameter name="pool" type="GstBufferPool*"/>
-        <parameter name="buffer" type="GstBuffer**" owned="true" pass_as="out">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter allow-none="1" name="params" type="GstBufferPoolAcquireParams*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="AllocBuffer" cname="GstAllocBufferFunc">
-      <return-type type="GstFlowReturn"/>
-      <parameters>
-        <parameter name="pool" type="GstBufferPool*"/>
-        <parameter name="buffer" type="GstBuffer**">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="params" type="GstBufferPoolAcquireParams*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="ResetBuffer" cname="GstResetBufferFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="pool" type="GstBufferPool*"/>
-        <parameter name="buffer" type="GstBuffer*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="ReleaseBuffer" cname="GstReleaseBufferFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="pool" type="GstBufferPool*"/>
-        <parameter name="buffer" type="GstBuffer*" owned="true">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="FreeBuffer" cname="GstFreeBufferFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="pool" type="GstBufferPool*"/>
-        <parameter name="buffer" type="GstBuffer*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="Message" cname="GstMessageFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="bus" type="GstBus*"/>
-        <parameter name="message" type="GstMessage*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="SyncMessage" cname="GstSyncMessageFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="bus" type="GstBus*"/>
-        <parameter name="message" type="GstMessage*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="GetChildByName" cname="GstGetChildByNameFunc">
-      <return-type type="GObject*" owned="true"/>
-      <parameters>
-        <parameter name="parent" type="GstChildProxy*"/>
-        <parameter name="name" type="const-gchar*"/>
-      </parameters>
-    </callback>
-    <callback name="GetChildByIndex" cname="GstGetChildByIndexFunc">
-      <return-type type="GObject*" owned="true"/>
-      <parameters>
-        <parameter name="parent" type="GstChildProxy*"/>
-        <parameter name="index" type="guint"/>
-      </parameters>
-    </callback>
-    <callback name="GetChildrenCount" cname="GstGetChildrenCountFunc">
-      <return-type type="guint"/>
-      <parameters>
-        <parameter name="parent" type="GstChildProxy*"/>
-      </parameters>
-    </callback>
-    <callback name="ChildAdded" cname="GstChildAddedFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="parent" type="GstChildProxy*"/>
-        <parameter name="child" type="GObject*"/>
-        <parameter name="name" type="const-gchar*"/>
-      </parameters>
-    </callback>
-    <callback name="ChildRemoved" cname="GstChildRemovedFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="parent" type="GstChildProxy*"/>
-        <parameter name="child" type="GObject*"/>
-        <parameter name="name" type="const-gchar*"/>
-      </parameters>
-    </callback>
-    <callback name="ChangeResolution" cname="GstChangeResolutionFunc">
-      <return-type type="guint64"/>
-      <parameters>
-        <parameter name="clock" type="GstClock*"/>
-        <parameter name="old_resolution" type="guint64"/>
-        <parameter name="new_resolution" type="guint64"/>
-      </parameters>
-    </callback>
-    <callback name="GetResolution" cname="GstGetResolutionFunc">
-      <return-type type="guint64"/>
-      <parameters>
-        <parameter name="clock" type="GstClock*"/>
-      </parameters>
-    </callback>
-    <callback name="GetInternalTime" cname="GstGetInternalTimeFunc">
-      <return-type type="guint64"/>
-      <parameters>
-        <parameter name="clock" type="GstClock*"/>
-      </parameters>
-    </callback>
-    <callback name="Wait" cname="GstWaitFunc">
-      <return-type type="GstClockReturn"/>
-      <parameters>
-        <parameter name="clock" type="GstClock*"/>
-        <parameter name="entry" type="GstClockEntry*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-        <parameter name="jitter" type="gint64"/>
-      </parameters>
-    </callback>
-    <callback name="WaitAsync" cname="GstWaitAsyncFunc">
-      <return-type type="GstClockReturn"/>
-      <parameters>
-        <parameter name="clock" type="GstClock*"/>
-        <parameter name="entry" type="GstClockEntry*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="Unschedule" cname="GstUnscheduleFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="clock" type="GstClock*"/>
-        <parameter name="entry" type="GstClockEntry*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="SyncValues" cname="GstSyncValuesFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="binding" type="GstControlBinding*"/>
-        <parameter name="_object" type="GstObject*"/>
-        <parameter name="timestamp" type="guint64"/>
-        <parameter name="last_sync" type="guint64"/>
-      </parameters>
-    </callback>
-    <callback name="GetValue" cname="GstGetValueFunc">
-      <return-type type="GValue*" owned="true">
-        <warning>missing glib:type-name</warning>
-      </return-type>
-      <parameters>
-        <parameter name="binding" type="GstControlBinding*"/>
-        <parameter name="timestamp" type="guint64"/>
-      </parameters>
-    </callback>
-    <callback name="GetValueArray" cname="GstGetValueArrayFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="binding" type="GstControlBinding*"/>
-        <parameter name="timestamp" type="guint64"/>
-        <parameter name="interval" type="guint64"/>
-        <parameter name="n_values" type="guint"/>
-        <parameter name="values" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="GetGValueArray" cname="GstGetGValueArrayFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="binding" type="GstControlBinding*"/>
-        <parameter name="timestamp" type="guint64"/>
-        <parameter name="interval" type="guint64"/>
-        <parameter name="n_values" type="guint"/>
-        <parameter name="values" type="GValue*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="PadAdded" cname="GstPadAddedFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="pad" type="GstPad*"/>
-      </parameters>
-    </callback>
-    <callback name="PadRemoved" cname="GstPadRemovedFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="pad" type="GstPad*"/>
-      </parameters>
-    </callback>
-    <callback name="NoMorePads" cname="GstNoMorePadsFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-      </parameters>
-    </callback>
-    <callback hidden="0" name="RequestNewPad" cname="GstRequestNewPadFunc">
-      <return-type type="GstPad*"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="templ" type="GstPadTemplate*"/>
-        <parameter name="name" type="const-gchar*"/>
-        <parameter name="caps" type="GstCaps*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="ReleasePad" cname="GstReleasePadFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="pad" type="GstPad*"/>
-      </parameters>
-    </callback>
-    <callback name="GetState" cname="GstGetStateFunc">
-      <return-type type="GstStateChangeReturn"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter allow-none="1" name="state" type="GstState" owned="true" pass_as="out"/>
-        <parameter allow-none="1" name="pending" type="GstState" owned="true" pass_as="out"/>
-        <parameter name="timeout" type="guint64"/>
-      </parameters>
-    </callback>
-    <callback name="SetState" cname="GstSetStateFunc">
-      <return-type type="GstStateChangeReturn"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="state" type="GstState"/>
-      </parameters>
-    </callback>
-    <callback name="ChangeState" cname="GstChangeStateFunc">
-      <return-type type="GstStateChangeReturn"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="transition" type="GstStateChange"/>
-      </parameters>
-    </callback>
-    <callback name="StateChanged" cname="GstStateChangedFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="oldstate" type="GstState"/>
-        <parameter name="newstate" type="GstState"/>
-        <parameter name="pending" type="GstState"/>
-      </parameters>
-    </callback>
-    <callback name="SetBus" cname="GstSetBusFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="bus" type="GstBus*"/>
-      </parameters>
-    </callback>
-    <callback name="ProvideClock" cname="GstProvideClockFunc">
-      <return-type type="GstClock*" owned="true"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-      </parameters>
-    </callback>
-    <callback name="SetClock" cname="GstSetClockFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="clock" type="GstClock*"/>
-      </parameters>
-    </callback>
-    <callback name="SendEvent" cname="GstSendEventFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="event" type="GstEvent*" owned="true">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="Query" cname="GstQueryFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="query" type="GstQuery*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="PostMessage" cname="GstPostMessageFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="element" type="GstElement*"/>
-        <parameter name="message" type="GstMessage*" owned="true">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="DeepNotify" cname="GstDeepNotifyFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="_object" type="GstObject*"/>
-        <parameter name="orig" type="GstObject*"/>
-        <parameter name="pspec" type="GParamSpec*"/>
-      </parameters>
-    </callback>
-    <callback name="Linked" cname="GstLinkedFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="peer" type="GstPad*"/>
-      </parameters>
-    </callback>
-    <callback name="Unlinked" cname="GstUnlinkedFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="pad" type="GstPad*"/>
-        <parameter name="peer" type="GstPad*"/>
-      </parameters>
-    </callback>
-    <callback name="PadCreated" cname="GstPadCreatedFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="templ" type="GstPadTemplate*"/>
-        <parameter name="pad" type="GstPad*"/>
-      </parameters>
-    </callback>
-    <callback name="GetPresetNames" cname="GstGetPresetNamesFunc">
-      <return-type type="gchar***" owned="true" array="true" null_term_array="true"/>
-      <parameters>
-        <parameter name="preset" type="GstPreset*"/>
-      </parameters>
-    </callback>
-    <callback name="GetPropertyNames" cname="GstGetPropertyNamesFunc">
-      <return-type type="gchar***" owned="true" array="true" null_term_array="true"/>
-      <parameters>
-        <parameter name="preset" type="GstPreset*"/>
-      </parameters>
-    </callback>
-    <callback name="LoadPreset" cname="GstLoadPresetFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="preset" type="GstPreset*"/>
-        <parameter name="name" type="const-gchar*"/>
-      </parameters>
-    </callback>
-    <callback name="SavePreset" cname="GstSavePresetFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="preset" type="GstPreset*"/>
-        <parameter name="name" type="const-gchar*"/>
-      </parameters>
-    </callback>
-    <callback name="RenamePreset" cname="GstRenamePresetFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="preset" type="GstPreset*"/>
-        <parameter name="old_name" type="const-gchar*"/>
-        <parameter name="new_name" type="const-gchar*"/>
-      </parameters>
-    </callback>
-    <callback name="DeletePreset" cname="GstDeletePresetFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="preset" type="GstPreset*"/>
-        <parameter name="name" type="const-gchar*"/>
-      </parameters>
-    </callback>
-    <callback name="SetMeta" cname="GstSetMetaFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="preset" type="GstPreset*"/>
-        <parameter name="name" type="const-gchar*"/>
-        <parameter name="tag" type="const-gchar*"/>
-        <parameter name="value" type="const-gchar*"/>
-      </parameters>
-    </callback>
-    <callback name="GetMeta" cname="GstGetMetaFunc">
-      <return-type type="gboolean"/>
-      <parameters>
-        <parameter name="preset" type="GstPreset*"/>
-        <parameter name="name" type="const-gchar*"/>
-        <parameter name="tag" type="const-gchar*"/>
-        <parameter name="value" type="gchar*" owned="true" pass_as="out"/>
-      </parameters>
-    </callback>
-    <callback name="Prepare" cname="GstPrepareFunc">
-      <return-type type="void"/>
-      <parameters throws="1">
-        <parameter name="pool" type="GstTaskPool*"/>
-        <parameter name="error" type="GError**"/>
-      </parameters>
-    </callback>
-    <callback name="Cleanup" cname="GstCleanupFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="pool" type="GstTaskPool*"/>
-      </parameters>
-    </callback>
-    <callback name="Push" cname="GstPushFunc">
-      <return-type type="gpointer"/>
-      <parameters throws="1">
-        <parameter name="pool" type="GstTaskPool*"/>
-        <parameter scope="async" name="func" type="GstTaskPoolFunction"/>
-        <parameter name="user_data" type="gpointer"/>
-        <parameter name="error" type="GError**"/>
-      </parameters>
-    </callback>
-    <callback name="Join" cname="GstJoinFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="pool" type="GstTaskPool*"/>
-        <parameter name="id" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="Peek" cname="GstPeekFunc">
-      <return-type type="guint8"/>
-      <parameters>
-        <parameter name="data" type="gpointer"/>
-        <parameter name="offset" type="gint64"/>
-        <parameter name="size" type="guint"/>
-      </parameters>
-    </callback>
-    <callback name="Suggest" cname="GstSuggestFunc">
-      <return-type type="void"/>
-      <parameters>
-        <parameter name="data" type="gpointer"/>
-        <parameter name="probability" type="guint"/>
-        <parameter name="caps" type="GstCaps*">
-          <warning>missing glib:type-name</warning>
-        </parameter>
-      </parameters>
-    </callback>
-    <callback name="GetLength" cname="GstGetLengthFunc">
-      <return-type type="guint64"/>
-      <parameters>
-        <parameter name="data" type="gpointer"/>
-      </parameters>
-    </callback>
-    <callback name="GetType" cname="GstGetTypeFunc">
-      <return-type type="GstURIType"/>
-      <parameters>
-        <parameter name="type" type="GType"/>
-      </parameters>
-    </callback>
-    <callback name="GetProtocols" cname="GstGetProtocolsFunc">
-      <return-type type="const gchar* const*" array="true" null_term_array="true"/>
-      <parameters>
-        <parameter name="type" type="GType"/>
-      </parameters>
-    </callback>
-    <callback name="GetUri" cname="GstGetUriFunc">
-      <return-type type="gchar*" owned="true"/>
-      <parameters>
-        <parameter name="handler" type="GstURIHandler*"/>
-      </parameters>
-    </callback>
-    <callback name="SetUri" cname="GstSetUriFunc">
-      <return-type type="gboolean"/>
-      <parameters throws="1">
-        <parameter name="handler" type="GstURIHandler*"/>
-        <parameter name="uri" type="const-gchar*"/>
-        <parameter name="error" type="GError**"/>
-      </parameters>
-    </callback>
     <object name="Global" cname="GstGlobal" opaque="true">
+      <method name="BufferGetMaxMemory" cname="gst_buffer_get_max_memory" shared="true">
+        <return-type type="guint"/>
+      </method>
+      <method name="CapsFeaturesFromString" cname="gst_caps_features_from_string" shared="true">
+        <return-type type="GstCapsFeatures*" owned="true">
+          <warning>missing glib:type-name</warning>
+        </return-type>
+        <parameters>
+          <parameter name="features" type="const-gchar*"/>
+        </parameters>
+      </method>
       <method name="CapsFromString" cname="gst_caps_from_string" shared="true">
         <return-type type="GstCaps*" owned="true">
           <warning>missing glib:type-name</warning>
@@ -9068,6 +8895,9 @@
         <return-type type="GSList*" element_type="GSList*" elements_owned="true">
           <warning>missing glib:type-name</warning>
         </return-type>
+      </method>
+      <method name="DebugGetColorMode" cname="gst_debug_get_color_mode" shared="true">
+        <return-type type="GstDebugColorMode"/>
       </method>
       <method name="DebugGetDefaultThreshold" cname="gst_debug_get_default_threshold" shared="true">
         <return-type type="GstDebugLevel"/>
@@ -9152,6 +8982,18 @@
           <parameter name="active" type="gboolean"/>
         </parameters>
       </method>
+      <method name="DebugSetColorMode" cname="gst_debug_set_color_mode" shared="true">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="mode" type="GstDebugColorMode"/>
+        </parameters>
+      </method>
+      <method name="DebugSetColorModeFromString" cname="gst_debug_set_color_mode_from_string" shared="true">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="mode" type="const-gchar*"/>
+        </parameters>
+      </method>
       <method name="DebugSetColored" cname="gst_debug_set_colored" shared="true">
         <return-type type="void"/>
         <parameters>
@@ -9169,6 +9011,13 @@
         <parameters>
           <parameter name="name" type="const-gchar*"/>
           <parameter name="level" type="GstDebugLevel"/>
+        </parameters>
+      </method>
+      <method name="DebugSetThresholdFromString" cname="gst_debug_set_threshold_from_string" shared="true">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="list" type="const-gchar*"/>
+          <parameter name="reset" type="gboolean"/>
         </parameters>
       </method>
       <method name="DebugUnsetThresholdForName" cname="gst_debug_unset_threshold_for_name" shared="true">
@@ -9289,6 +9138,12 @@
           <warning>missing glib:type-name</warning>
         </return-type>
       </method>
+      <method name="IsCapsFeatures" cname="gst_is_caps_features" shared="true">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter name="obj" type="gpointer"/>
+        </parameters>
+      </method>
       <method name="IsInitialized" cname="gst_is_initialized" shared="true">
         <return-type type="gboolean"/>
       </method>
@@ -9305,6 +9160,12 @@
         <return-type type="guint32"/>
         <parameters>
           <parameter name="type" type="GstMessageType"/>
+        </parameters>
+      </method>
+      <method name="MetaApiTypeGetTags" cname="gst_meta_api_type_get_tags" shared="true">
+        <return-type type="const-gchar**" array="true" null_term_array="true"/>
+        <parameters>
+          <parameter name="api" type="GType"/>
         </parameters>
       </method>
       <method name="MetaApiTypeHasTag" cname="gst_meta_api_type_has_tag" shared="true">
@@ -9394,7 +9255,7 @@
         </parameters>
       </method>
       <method name="ParseBinFromDescriptionFull" cname="gst_parse_bin_from_description_full" shared="true">
-        <return-type type="GstBin*" owned="true"/>
+        <return-type type="GstElement*" owned="true"/>
         <parameters throws="1">
           <parameter name="bin_description" type="const-gchar*"/>
           <parameter name="ghost_unlinked_pads" type="gboolean"/>
@@ -9595,7 +9456,7 @@
           <parameter name="type" type="GType"/>
           <parameter name="nick" type="const-gchar*"/>
           <parameter name="blurb" type="const-gchar*"/>
-          <parameter name="func" type="GstTagMergeFunc"/>
+          <parameter allow-none="1" name="func" type="GstTagMergeFunc"/>
         </parameters>
       </method>
       <method name="TagRegisterStatic" cname="gst_tag_register_static" shared="true">
@@ -9606,7 +9467,7 @@
           <parameter name="type" type="GType"/>
           <parameter name="nick" type="const-gchar*"/>
           <parameter name="blurb" type="const-gchar*"/>
-          <parameter name="func" type="GstTagMergeFunc"/>
+          <parameter allow-none="1" name="func" type="GstTagMergeFunc"/>
         </parameters>
       </method>
       <method name="TocEntryTypeGetNick" cname="gst_toc_entry_type_get_nick" shared="true">
@@ -9621,7 +9482,7 @@
       <method name="TypeFindRegister" cname="gst_type_find_register" shared="true">
         <return-type type="gboolean"/>
         <parameters>
-          <parameter name="plugin" type="GstPlugin*"/>
+          <parameter allow-none="1" name="plugin" type="GstPlugin*"/>
           <parameter name="name" type="const-gchar*"/>
           <parameter name="rank" type="guint"/>
           <parameter closure="6" destroy="7" scope="notified" name="func" type="GstTypeFindFunction"/>
@@ -9772,6 +9633,9 @@
           <parameter name="a" type="gint64"/>
           <parameter name="b" type="gint64"/>
         </parameters>
+      </method>
+      <method name="UtilGroupIdNext" cname="gst_util_group_id_next" shared="true">
+        <return-type type="guint"/>
       </method>
       <method name="UtilGuint64ToGdouble" cname="gst_util_guint64_to_gdouble" shared="true">
         <return-type type="gdouble"/>
@@ -9975,6 +9839,16 @@
           </parameter>
         </parameters>
       </method>
+      <method name="ValueGetCapsFeatures" cname="gst_value_get_caps_features" shared="true">
+        <return-type type="GstCapsFeatures*">
+          <warning>missing glib:type-name</warning>
+        </return-type>
+        <parameters>
+          <parameter name="value" type="GValue*">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+        </parameters>
+      </method>
       <method name="ValueGetDoubleRangeMax" cname="gst_value_get_double_range_max" shared="true">
         <return-type type="gdouble"/>
         <parameters>
@@ -10165,6 +10039,17 @@
           </parameter>
         </parameters>
       </method>
+      <method name="ValueSetCapsFeatures" cname="gst_value_set_caps_features" shared="true">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="value" type="GValue*">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+          <parameter name="features" type="GstCapsFeatures*">
+            <warning>missing glib:type-name</warning>
+          </parameter>
+        </parameters>
+      </method>
       <method name="ValueSetDoubleRange" cname="gst_value_set_double_range" shared="true">
         <return-type type="void"/>
         <parameters>
@@ -10311,6 +10196,7 @@
       <constant value="0" ctype="gint" gtype="gint" name="BUFFER_COPY_METADATA"/>
       <constant value="18446744073709551615" ctype="guint64" gtype="guint64" name="BUFFER_OFFSET_NONE"/>
       <constant value="1" ctype="gint" gtype="gint" name="CAN_INLINE"/>
+      <constant value="memory:SystemMemory" ctype="gchar*" gtype="gchar*" name="CAPS_FEATURE_MEMORY_SYSTEM_MEMORY"/>
       <constant value="18446744073709551615" ctype="GstClockTime" gtype="GstClockTime" name="CLOCK_TIME_NONE"/>
       <constant value="240" ctype="gint" gtype="gint" name="DEBUG_BG_MASK"/>
       <constant value="15" ctype="gint" gtype="gint" name="DEBUG_FG_MASK"/>
@@ -10367,6 +10253,7 @@
       <constant value="unknown" ctype="gchar*" gtype="gchar*" name="LICENSE_UNKNOWN"/>
       <constant value="0" ctype="gint" gtype="gint" name="LOCK_FLAG_READWRITE"/>
       <constant value="0" ctype="gint" gtype="gint" name="MAP_READWRITE"/>
+      <constant value="memory" ctype="gchar*" gtype="gchar*" name="META_TAG_MEMORY_STR"/>
       <constant value="1000000" ctype="gint" gtype="gint" name="MSECOND"/>
       <constant value="1" ctype="gint" gtype="gint" name="NSECOND"/>
       <constant value="2" ctype="gint" gtype="gint" name="PARAM_CONTROLLABLE"/>
@@ -10374,9 +10261,11 @@
       <constant value="16" ctype="gint" gtype="gint" name="PARAM_MUTABLE_PLAYING"/>
       <constant value="4" ctype="gint" gtype="gint" name="PARAM_MUTABLE_READY"/>
       <constant value="256" ctype="gint" gtype="gint" name="PARAM_USER_SHIFT"/>
+      <constant value="paA" ctype="gchar*" gtype="gchar*" name="PTR_FORMAT"/>
       <constant value="8" ctype="gint" gtype="gint" name="QUERY_NUM_SHIFT"/>
       <constant value="0" ctype="gint" gtype="gint" name="QUERY_TYPE_BOTH"/>
       <constant value="1000000000" ctype="gint" gtype="gint" name="SECOND"/>
+      <constant value="paB" ctype="gchar*" gtype="gchar*" name="SEGMENT_FORMAT"/>
       <constant value="album" ctype="gchar*" gtype="gchar*" name="TAG_ALBUM"/>
       <constant value="album-artist" ctype="gchar*" gtype="gchar*" name="TAG_ALBUM_ARTIST"/>
       <constant value="album-artist-sortname" ctype="gchar*" gtype="gchar*" name="TAG_ALBUM_ARTIST_SORTNAME"/>
@@ -10427,6 +10316,7 @@
       <constant value="homepage" ctype="gchar*" gtype="gchar*" name="TAG_HOMEPAGE"/>
       <constant value="image" ctype="gchar*" gtype="gchar*" name="TAG_IMAGE"/>
       <constant value="image-orientation" ctype="gchar*" gtype="gchar*" name="TAG_IMAGE_ORIENTATION"/>
+      <constant value="interpreted-by" ctype="gchar*" gtype="gchar*" name="TAG_INTERPRETED_BY"/>
       <constant value="isrc" ctype="gchar*" gtype="gchar*" name="TAG_ISRC"/>
       <constant value="keywords" ctype="gchar*" gtype="gchar*" name="TAG_KEYWORDS"/>
       <constant value="language-code" ctype="gchar*" gtype="gchar*" name="TAG_LANGUAGE_CODE"/>
@@ -10441,6 +10331,7 @@
       <constant value="organization" ctype="gchar*" gtype="gchar*" name="TAG_ORGANIZATION"/>
       <constant value="performer" ctype="gchar*" gtype="gchar*" name="TAG_PERFORMER"/>
       <constant value="preview-image" ctype="gchar*" gtype="gchar*" name="TAG_PREVIEW_IMAGE"/>
+      <constant value="publisher" ctype="gchar*" gtype="gchar*" name="TAG_PUBLISHER"/>
       <constant value="replaygain-reference-level" ctype="gchar*" gtype="gchar*" name="TAG_REFERENCE_LEVEL"/>
       <constant value="serial" ctype="gchar*" gtype="gchar*" name="TAG_SERIAL"/>
       <constant value="show-episode-number" ctype="gchar*" gtype="gchar*" name="TAG_SHOW_EPISODE_NUMBER"/>

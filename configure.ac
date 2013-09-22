@@ -1,4 +1,4 @@
-AC_INIT([gstreamer-sharp], [1.0.6])
+AC_INIT([gstreamer-sharp], [1.1.90])
 AC_CONFIG_SRCDIR([README])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE
@@ -9,13 +9,13 @@ LT_INIT
 dnl Package settings
 ASSEMBLY_COMPANY=""
 ASSEMBLY_COPYRIGHT="2012 Andreia Gaita"
-ASSEMBLY_DESCRIPTION="Gst-1.0 bindings for Mono"
+ASSEMBLY_DESCRIPTION="gstreamer bindings for Mono"
 ASSEMBLY_NAME="gstreamer-sharp"
 ASSEMBLY_NAMESPACE="Gst"
 ASSEMBLY_PC="gstreamer-sharp-1.0"
 ASSEMBLY_SHORTNAME="gstreamer"
 ASSEMBLY_TITLE="Gst#"
-ASSEMBLY_VERSION="1.0.6"
+ASSEMBLY_VERSION="1.1.90"
 AC_SUBST([ACLOCAL_AMFLAGS], ["-I m4 \${ACLOCAL_FLAGS}"])
 
 AC_SUBST(ASSEMBLY_NAME)
@@ -77,7 +77,9 @@ PKG_CHECK_MODULES(GTK_SHARP, gtk-sharp-3.0)
 AC_SUBST(GTK_SHARP_CFLAGS)
 AC_SUBST(GTK_SHARP_LIBS)
 gtksharp_prefix=`pkg-config --variable=prefix gtk-sharp-3.0`
+GAPIXMLDIR=`pkg-config --variable=gapidir gtk-sharp-3.0`
 AC_SUBST(gtksharp_prefix)
+AC_SUBST(GAPIXMLDIR)
 
 dnl Check for gapi
 AC_PATH_PROG(GAPI_PARSER, gapi3-parser, no)
@@ -132,11 +134,13 @@ AC_SUBST(MONODOCER)
 AM_CONDITIONAL(ENABLE_MONODOC, test "x$enable_monodoc" = "xyes")
 dnl Check for Gst
 PKG_CHECK_MODULES(GST, gstreamer-1.0)
-gstreamer_prefix=/usr
+gstreamer_prefix=/usr/local
 AC_SUBST(gstreamer_prefix)
 AC_SUBST(GST_LIBS)
 AC_SUBST(GST_CFLAGS)
 
+dnl extra m4 calls
+CHECK_GLIBSHARP
 
 
 AC_CONFIG_FILES([

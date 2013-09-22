@@ -84,5 +84,6 @@
 	<attr path="/api/namespace/struct[@cname='GstMessage']/method[@cname='gst_message_parse_error']" name="hidden">true</attr>
 	<attr path="/api/namespace/struct[@cname='GstMessage']/method[@cname='gst_message_get_stream_status_object']" name="hidden">true</attr>
 	<attr path="/api/namespace/struct[@cname='GstMessage']/method[@cname='gst_message_set_stream_status_object']" name="hidden">true</attr>
+	<attr path="/api/namespace/struct[@cname='GstBuffer']/method[@cname='gst_buffer_extract_dup']" name="hidden">true</attr>
 </metadata>
 
