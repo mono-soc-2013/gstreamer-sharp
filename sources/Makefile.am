@@ -36,13 +36,13 @@ $(API): $(srcdir)/$(RAW_API) $(srcdir)/$(METADATA)
 generated-stamp: $(API)
 	 $(GAPI_CODEGEN) --generate $(srcdir)/$(API) $(GTK_SHARP_CFLAGS) \
 		--outdir=generated \
-		--glue-filename=$(GLUEDIR)/generated.c --gluelib-name=libgstreamersharpglue-1.1.90.so \
+		--glue-filename=$(GLUEDIR)/generated.c --gluelib-name=libgstreamersharpglue-1.2.0.so \
 		--glue-includes=gst/gst.h, --gapidir=$(gapidir) \
 	 	--assembly-name=$(ASSEMBLY_NAME) && touch generated-stamp
 
 $(DLL): $(build_sources) generated-stamp
 	$(CSC) -nowarn:169 -unsafe -target:library $(GTK_SHARP_LIBS) \
-		$(build_sources)  $(GLIBSHARP_LIBS) generated/*.cs -out:$(DLL)
+		$(build_sources)  generated/*.cs -out:$(DLL)
 
 install-data-local:
 	echo "$(GACUTIL) /i $(DLL) /f $(GACUTIL_FLAGS)";  \
