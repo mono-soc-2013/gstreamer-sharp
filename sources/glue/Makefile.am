@@ -1,16 +1,16 @@
-lib_LTLIBRARIES = libgstreamersharpglue-1.1.90.la
+lib_LTLIBRARIES = libgstreamersharpglue-1.2.0.la
 
-libgstreamersharpglue_1_1_90_la_SOURCES =
+libgstreamersharpglue_1_2_0_la_SOURCES = gobject.c
 
-nodist_libgstreamersharpglue_1_1_90_la_SOURCES = generated.c
+nodist_libgstreamersharpglue_1_2_0_la_SOURCES = generated.c
 
-libgstreamersharpglue_1_1_90_la_LDFLAGS = -module -avoid-version -no-undefined
+libgstreamersharpglue_1_2_0_la_LDFLAGS = -module -avoid-version -no-undefined
 
-libgstreamersharpglue_1_1_90_la_LIBADD = $(GST_LIBS)
+libgstreamersharpglue_1_2_0_la_LIBADD = $(GST_LIBS)
 
 INCLUDES = $(GST_CFLAGS) -I$(top_srcdir)
 
-libgstreamersharpglue.dll: $(libgstreamersharpglue_1_1_90_la_OBJECTS) libgstreamersharpglue.rc libgstreamersharpglue.def
+libgstreamersharpglue.dll: $(libgstreamersharpglue_1_2_0_la_OBJECTS) libgstreamersharpglue.rc libgstreamersharpglue.def
 	./build-dll libgstreamersharpglue $(VERSION)
 
 CLEANFILES = lib*.a lib*.dll
